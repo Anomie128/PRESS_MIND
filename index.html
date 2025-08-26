@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>마음버튼 · AI 감정 코치 (브라우저형)</title>
+  <style>
+    :root { --bg:#0b1220; --card:#121a2b; --ink:#e6eefc; --muted:#9fb0d1; --brand:#7aa2ff; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Apple SD Gothic Neo, sans-serif; background:linear-gradient(180deg,#0b1220,#0a0f1a); color:var(--ink); }
+    .wrap { max-width:900px; margin:0 auto; padding:24px; }
+    header { display:flex; align-items:center; gap:12px; }
+    .logo { width:36px; height:36px; border-radius:12px; background:radial-gradient(120% 120% at 10% 10%, #7aa2ff 0%, #7f5cff 55%, #2a2f6f 100%); box-shadow:0 8px 30px rgba(122,162,255,.35); }
+    h1 { font-size:20px; margin:0; letter-spacing:.3px; }
+    .muted { color:var(--muted); font-size:14px; }
+    .card { background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:20px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+    .row { display:flex; gap:12px; }
+    .col { flex:1; }
+    .chat { height:48vh; overflow:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+    .bubble { max-width:78%; padding:12px 14px; border-radius:16px; line-height:1.45; white-space:pre-wrap; word-wrap:break-word; }
+    .user { align-self:flex-end; background:#223053; border:1px solid rgba(255,255,255,.08); }
+    .bot { align-self:flex-start; background:#101725; border:1px solid rgba(122,162,255,.28); }
+    .input { display:flex; gap:10px; margin-top:12px; }
+    textarea { flex:1; resize:vertical; min-height:56px; max-height:200px; padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,.08); background:#0b1327; color:var(--ink); }
+    button { padding:12px 16px; border-radius:14px; border:0; background:linear-gradient(135deg,#7aa2ff,#7f5cff); color:white; font-weight:600; cursor:pointer; }
+    button:disabled { filter:grayscale(1); opacity:.7; cursor:not-allowed; }
+    .status { margin-top:10px; font-size:13px; color:var(--muted); }
+    footer { margin-top:16px; font-size:12px; color:var(--muted); text-align:center; }
+    .pill { display:inline-block; padding:6px 10px; background:#0d1426; border:1px solid rgba(255,255,255,.08); border-radius:999px; font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo"></div>
+      <div>
+        <h1>마음버튼 · AI 감정 코치</h1>
+        <div class="muted">짧고 중독성 있는 루프: 질문 → 피드백 → 60초 미션</div>
+      </div>
+      <div style="margin-left:auto" class="muted"><span class="pill" id="status-pill">서버 연결 대기…</span></div>
+    </header>
+    <div class="card" style="margin-top:14px">
+      <div class="row">
+        <div class="col">
+          <div class="chat" id="chat"></div>
+          <div class="input">
+            <textarea id="prompt" placeholder="지금 감정이나 고민을 한 줄로 적어보세요… 예: 관계에서 반복되는 패턴이 있어요"></textarea>
+            <button id="send">보내기</button>
+          </div>
+          <div class="status" id="status">서버 URL을 설정하고, 페이지에서 Vercel API를 호출합니다.</div>
+        </div>
+      </div>
+    </div>
+    <footer>
+      이 도구는 정보 제공/자기관리 보조용이며, 위기상황에는 지역 긴급전화에 연락하세요.
+    </footer>
+  </div>
+
+  <script>
+    // --- 설정: Vercel 배포 URL을 여기에 넣으세요 ---
+    // 예: const VERCEL_API = "https://my-vercel-app.vercel.app/api/chat";
+    const VERCEL_API = "https://YOUR_VERCEL_APP.vercel.app/api/chat";
+
+    const chatEl = document.getElementById('chat');
+    const promptEl = document.getElementById('prompt');
+    const sendBtn = document.getElementById('send');
+    const statusEl = document.getElementById('status');
+    const statusPill = document.getElementById('status-pill');
+
+    function addBubble(text, who) {
+      const div = document.createElement('div');
+      div.className = 'bubble ' + (who === 'user' ? 'user' : 'bot');
+      div.textContent = text;
+      chatEl.appendChild(div);
+      chatEl.scrollTop = chatEl.scrollHeight;
+      return div;
+    }
+
+    async function callApi(message) {
+      // 네트워크 요청 — Vercel serverless function으로 전달
+      const res = await fetch(VERCEL_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error("API 응답 실패: " + res.status + " " + txt);
+      }
+      return res.json();
+    }
+
+    sendBtn.addEventListener('click', async () => {
+      const text = (promptEl.value || '').trim();
+      if (!text) return;
+      promptEl.value = '';
+      addBubble(text, 'user');
+      sendBtn.disabled = true;
+      statusPill.textContent = "응답 대기 중…";
+      try {
+        const data = await callApi(text);
+        addBubble(data.reply || '응답 없음', 'bot');
+        statusEl.textContent = '정상 응답 수신';
+      } catch (err) {
+        console.error(err);
+        addBubble('서버 에러: ' + err.message, 'bot');
+        statusEl.textContent = '에러: 콘솔 확인';
+      } finally {
+        sendBtn.disabled = false;
+        statusPill.textContent = "서버 연결 대기…";
+      }
+    });
+
+    promptEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
