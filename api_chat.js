@@ -1,4 +1,3 @@
-res.setHeader("Access-Control-Allow-Origin", "https://anomie128.github.io");
 // Place this file in your repository at /api/chat.js (Vercel will deploy it automatically).
 // It expects an environment variable OPENAI_API_KEY to be set in Vercel Project Settings.
 //
@@ -6,7 +5,7 @@ res.setHeader("Access-Control-Allow-Origin", "https://anomie128.github.io");
 
 export default async function handler(req, res) {
   // Basic CORS handling so the GitHub Pages front-end can call this endpoint.
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://anomie128.github.io');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
