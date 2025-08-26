@@ -1,7 +1,4 @@
-res.setHeader("Access-Control-Allow-Origin", "*"); // 'https://anomie128.github.io' 
-if (req.method === "OPTIONS") {
-  return res.status(200).end();
-}
+res.setHeader("Access-Control-Allow-Origin", "https://anomie128.github.io");
 // Place this file in your repository at /api/chat.js (Vercel will deploy it automatically).
 // It expects an environment variable OPENAI_API_KEY to be set in Vercel Project Settings.
 //
@@ -36,7 +33,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // 필요에 따라 교체
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: '너는 한국어로 답하는 짧은 감정 코치다. 항상 3단계 루프를 유지한다: ①한 줄 공감 ②패턴 라벨링 ③60초 미션. 답변은 120자 이내, 이모지 1개만 사용. 위험 신호가 보이면 즉시 도움을 권유한다.' },
           { role: 'user', content: message }
