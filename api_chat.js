@@ -1,3 +1,7 @@
+res.setHeader("Access-Control-Allow-Origin", "*"); // 'https://anomie128.github.io' 
+if (req.method === "OPTIONS") {
+  return res.status(200).end();
+}
 // Place this file in your repository at /api/chat.js (Vercel will deploy it automatically).
 // It expects an environment variable OPENAI_API_KEY to be set in Vercel Project Settings.
 //
