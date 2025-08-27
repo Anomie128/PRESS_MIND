@@ -57,63 +57,60 @@
   </div>
 
   <script>
-    const VERCEL_API = "https://PRESS_MIND.vercel.app/api/chat";
-    const chatEl = document.getElementById('chat');
-    const promptEl = document.getElementById('prompt');
-    const sendBtn = document.getElementById('send');
-    const statusEl = document.getElementById('status');
-    const statusPill = document.getElementById('status-pill');
+  const VERCEL_API = "https://press-mind-omega.vercel.app/api/chat";
+  const chatEl = document.getElementById('chat');
+  const promptEl = document.getElementById('prompt');
+  const sendBtn = document.getElementById('send');
+  const statusEl = document.getElementById('status');
+  const statusPill = document.getElementById('status-pill');
 
-    function addBubble(text, who) {
-      const div = document.createElement('div');
-      div.className = 'bubble ' + (who === 'user' ? 'user' : 'bot');
-      div.textContent = text;
-      chatEl.appendChild(div);
-      chatEl.scrollTop = chatEl.scrollHeight;
-      return div;
-    }
+  function addBubble(text, who) {
+    const div = document.createElement('div');
+    div.className = 'bubble ' + (who === 'user' ? 'user' : 'bot');
+    div.textContent = text;
+    chatEl.appendChild(div);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    return div;
+  }
 
-    async function callApi(message) {
-      // 네트워크 요청 — Vercel serverless function으로 전달
-      const res = await fetch(VERCEL_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error("API 응답 실패: " + res.status + " " + txt);
-      }
-      return res.json();
-    }
-
-    sendBtn.addEventListener('click', async () => {
-      const text = (promptEl.value || '').trim();
-      if (!text) return;
-      promptEl.value = '';
-      addBubble(text, 'user');
-      sendBtn.disabled = true;
-      statusPill.textContent = "응답 대기 중…";
-      try {
-        const data = await callApi(text);
-        addBubble(data.reply || '응답 없음', 'bot');
-        statusEl.textContent = '정상 응답 수신';
-      } catch (err) {
-        console.error(err);
-        addBubble('서버 에러: ' + err.message, 'bot');
-        statusEl.textContent = '에러: 콘솔 확인';
-      } finally {
-        sendBtn.disabled = false;
-        statusPill.textContent = "서버 연결 대기…";
-      }
+  async function callApi(message) {
+    const res = await fetch(VERCEL_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
     });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error("API 응답 실패: " + res.status + " " + txt);
+    }
+    return res.json();
+  }
 
-    promptEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendBtn.click();
-      }
-    });
-  </script>
-</body>
-</html>
+  sendBtn.addEventListener('click', async () => {
+    const text = (promptEl.value || '').trim();
+    if (!text) return;
+    promptEl.value = '';
+    addBubble(text, 'user');
+    sendBtn.disabled = true;
+    statusPill.textContent = "응답 대기 중…";
+    try {
+      const data = await callApi(text);
+      addBubble(data.reply || '응답 없음', 'bot');
+      statusEl.textContent = '정상 응답 수신';
+    } catch (err) {
+      console.error(err);
+      addBubble('서버 에러: ' + err.message, 'bot');
+      statusEl.textContent = '에러: 콘솔 확인';
+    } finally {
+      sendBtn.disabled = false;
+      statusPill.textContent = "서버 연결 대기…";
+    }
+  });
+
+  promptEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+</script>
