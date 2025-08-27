@@ -6,24 +6,22 @@
 export default async function handler(req, res) {
   // Basic CORS handling so the GitHub Pages front-end can call this endpoint.
   res.setHeader('Access-Control-Allow-Origin', 'https://anomie128.github.io');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-
+  if (req.method === "GET") return res.status(200).json({ ok: true });
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Only POST allowed' });
   }
 
   try {
-    const body = req.body || (await readJson(req));
-    const message = body.message;
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Invalid message' });
-    }
-
+   const body = req.body && typeof req.body === "object" ? req.body : await readJson(req);
+  const message = typeof body?.message === "string" ? body.message.trim() : "";
+  if (!message) return res.status(400).json({ error: "Missing 'message' in body" });
+    
     // Prepare request to OpenAI Chat Completions endpoint.
     const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -44,8 +42,7 @@ export default async function handler(req, res) {
 
     if (!openaiRes.ok) {
       const text = await openaiRes.text();
-      return res.status(500).json({ error: 'OpenAI API error', details: text });
-    }
+      return res.status(500).json({ error: "OpenAI error", details: await openaiRes.text() });
 
     const data = await openaiRes.json();
     const reply = data.choices?.[0]?.message?.content || '응답을 받지 못했습니다.';
@@ -63,11 +60,8 @@ async function readJson(req) {
     let data = '';
     req.on('data', chunk => { data += chunk; });
     req.on('end', () => {
-      try {
-        resolve(JSON.parse(data || '{}'));
-      } catch (e) {
-        resolve({});
-      }
+      try { resolve(JSON.parse(data || '{}')); } 
+      catch (e) { resolve({}); }
     });
     req.on('error', (e) => reject(e));
   });
