@@ -6,7 +6,7 @@
 export default async function handler(req, res) {
   // Basic CORS handling so the GitHub Pages front-end can call this endpoint.
   res.setHeader('Access-Control-Allow-Origin', 'https://anomie128.github.io');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
   if (req.method === "GET") return res.status(200).json({ ok: true });
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Only POST allowed' });
+    return res.status(405).json({ error: 'Only POST requests allowed' });
   }
 
   try {
